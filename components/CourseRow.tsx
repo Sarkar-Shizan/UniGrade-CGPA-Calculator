@@ -2,7 +2,41 @@
 
 import { Trash2 } from "lucide-react";
 import type { Course, University } from "@/types";
-import { coursePoint, marksToGrade } from "@/utils/gpa";
+
+/* ---------------- helpers (replacing utils) ---------------- */
+
+function coursePoint(course: Course, university: University) {
+  if (university.gradingType === "letter") {
+    const g = university.grades.find((x) => x.grade === course.grade);
+    return g ? g.point : 0;
+  }
+
+  if (university.gradingType === "percentage") {
+    const marks = course.marks ?? 0;
+    const g = university.grades.find(
+      (x) =>
+        x.minPercent != null &&
+        x.maxPercent != null &&
+        marks >= x.minPercent &&
+        marks <= x.maxPercent
+    );
+    return g ? g.point : 0;
+  }
+
+  return 0;
+}
+
+function marksToGrade(marks: number, university: University) {
+  return university.grades.find(
+    (g) =>
+      g.minPercent != null &&
+      g.maxPercent != null &&
+      marks >= g.minPercent &&
+      marks <= g.maxPercent
+  );
+}
+
+/* ---------------- component ---------------- */
 
 export function CourseRow({
   course,
@@ -16,6 +50,7 @@ export function CourseRow({
   onRemove: () => void;
 }) {
   const point = coursePoint(course, university);
+
   const derivedGrade =
     university.gradingType === "percentage" && course.marks != null
       ? marksToGrade(course.marks, university)?.grade
@@ -26,15 +61,21 @@ export function CourseRow({
       <input
         placeholder="Course name"
         value={course.name}
-        onChange={(e) => onChange({ ...course, name: e.target.value })}
+        onChange={(e) =>
+          onChange({ ...course, name: e.target.value })
+        }
         className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
       />
+
       <input
         placeholder="Code"
         value={course.code}
-        onChange={(e) => onChange({ ...course, code: e.target.value })}
+        onChange={(e) =>
+          onChange({ ...course, code: e.target.value })
+        }
         className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
       />
+
       <input
         type="number"
         min={0}
@@ -42,15 +83,22 @@ export function CourseRow({
         placeholder="Credits"
         value={course.credits || ""}
         onChange={(e) =>
-          onChange({ ...course, credits: parseFloat(e.target.value) || 0 })
+          onChange({
+            ...course,
+            credits: parseFloat(e.target.value) || 0,
+          })
         }
         className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
       />
+
       {university.gradingType === "letter" ? (
         <select
           value={course.grade ?? ""}
           onChange={(e) =>
-            onChange({ ...course, grade: e.target.value || undefined })
+            onChange({
+              ...course,
+              grade: e.target.value || undefined,
+            })
           }
           className="bg-background border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
         >
@@ -72,14 +120,17 @@ export function CourseRow({
             onChange({
               ...course,
               marks:
-                e.target.value === "" ? undefined : parseFloat(e.target.value),
+                e.target.value === ""
+                  ? undefined
+                  : parseFloat(e.target.value),
             })
           }
           className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
         />
       )}
+
       <div className="text-sm tabular-nums text-center">
-        {point != null ? (
+        {point > 0 ? (
           <span className="font-semibold">
             {point.toFixed(2)}
             {derivedGrade && (
@@ -92,6 +143,7 @@ export function CourseRow({
           <span className="text-muted-foreground">—</span>
         )}
       </div>
+
       <button
         onClick={onRemove}
         aria-label="Remove"

@@ -4,7 +4,11 @@ import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { universities } from "@/data/universities";
 import type { University } from "@/types";
-import { cn } from "@/lib/utils";
+
+/* local cn helper (replaces utils) */
+function cn(...classes: (string | false | null | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
 export function UniversityPicker({
   value,
@@ -18,12 +22,15 @@ export function UniversityPicker({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     if (!q) return universities;
-    return universities.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.country.toLowerCase().includes(q),
-    );
+
+    return universities.filter((u) => {
+      const name = u.name?.toLowerCase() ?? "";
+      const country = u.country?.toLowerCase() ?? "";
+
+      return name.includes(q) || country.includes(q);
+    });
   }, [query]);
 
   const selected = universities.find((u) => u.id === value);
@@ -39,16 +46,19 @@ export function UniversityPicker({
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             University
           </div>
+
           <div className="font-medium truncate">
             {selected ? selected.name : "Select your university"}
           </div>
+
           {selected && (
             <div className="text-xs text-muted-foreground">
-              {selected.country} · {selected.scale.toFixed(1)} scale ·{" "}
-              {selected.gradingType}
+              {selected.country ?? "Unknown"} ·{" "}
+              {selected.scale.toFixed(1)} scale · {selected.gradingType}
             </div>
           )}
         </div>
+
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
 
@@ -64,12 +74,14 @@ export function UniversityPicker({
               className="w-full bg-transparent outline-none text-sm"
             />
           </div>
+
           <ul className="max-h-72 overflow-auto mt-1">
             {filtered.length === 0 && (
               <li className="text-sm text-muted-foreground px-3 py-6 text-center">
                 No matches
               </li>
             )}
+
             {filtered.map((u) => (
               <li key={u.id}>
                 <button
@@ -81,15 +93,17 @@ export function UniversityPicker({
                   }}
                   className={cn(
                     "w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl text-sm hover:bg-accent/60 transition",
-                    value === u.id && "bg-accent/50",
+                    value === u.id && "bg-accent/50"
                   )}
                 >
                   <div className="min-w-0 text-left">
                     <div className="font-medium truncate">{u.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {u.country} · {u.scale.toFixed(1)} · {u.gradingType}
+                      {u.country ?? "Unknown"} ·{" "}
+                      {u.scale.toFixed(1)} · {u.gradingType}
                     </div>
                   </div>
+
                   {value === u.id && (
                     <Check className="h-4 w-4 shrink-0 text-primary" />
                   )}

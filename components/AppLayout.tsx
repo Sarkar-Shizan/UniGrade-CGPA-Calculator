@@ -1,4 +1,3 @@
-import React from 'react';
 "use client";
 
 import Link from "next/link";
@@ -9,17 +8,11 @@ import {
   History,
   Home,
   Moon,
-
-function cn(...classes: (string | undefined | false | null)[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
   Settings,
   Sun,
 } from "lucide-react";
 import type { ReactNode } from "react";
-
-
+import { useState } from "react";
 
 const nav = [
   { href: "/home", label: "Home", icon: Home },
@@ -29,9 +22,16 @@ const nav = [
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+function cn(...classes: (string | undefined | false | null)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [theme, setTheme] = React.useState('dark'); const toggle = () => setTheme(theme === 'dark' ? 'light' : 'dark');
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  const toggle = () =>
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   return (
     <div className="min-h-screen flex w-full">
@@ -41,16 +41,22 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Calculator className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold truncate">CGPA Calculator</div>
+            <div className="text-sm font-semibold truncate">
+              CGPA Calculator
+            </div>
             <div className="text-xs text-muted-foreground truncate">
               University-aware
             </div>
           </div>
         </div>
+
         <nav className="glass rounded-2xl p-2 flex-1">
           <ul className="flex flex-col gap-1">
             {nav.map((n) => {
-              const active = pathname === n.href || pathname.startsWith(`${n.href}/`);
+              const active =
+                pathname === n.href ||
+                pathname.startsWith(`${n.href}/`);
+
               return (
                 <li key={n.href}>
                   <Link
@@ -59,7 +65,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                       "flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all",
                       active
                         ? "gradient-brand shadow-md"
-                        : "hover:bg-accent/60 text-foreground/80",
+                        : "hover:bg-accent/60 text-foreground/80"
                     )}
                   >
                     <n.icon className="h-4 w-4" />
@@ -70,6 +76,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             })}
           </ul>
         </nav>
+
         <button
           onClick={toggle}
           className="glass rounded-2xl p-3 flex items-center gap-3 text-sm hover:bg-accent/50 transition"
@@ -91,6 +98,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="font-semibold">CGPA Calculator</div>
           </div>
+
           <button
             onClick={toggle}
             aria-label="Toggle theme"
@@ -103,13 +111,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
             )}
           </button>
         </div>
+
         <div className="animate-fade-in">{children}</div>
       </main>
 
       <nav className="md:hidden fixed bottom-3 left-3 right-3 z-40 glass rounded-2xl px-2 py-2">
         <ul className="flex items-center justify-between">
           {nav.map((n) => {
-            const active = pathname === n.href || pathname.startsWith(`${n.href}/`);
+            const active =
+              pathname === n.href ||
+              pathname.startsWith(`${n.href}/`);
+
             return (
               <li key={n.href} className="flex-1">
                 <Link
@@ -118,7 +130,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     "flex flex-col items-center gap-0.5 rounded-xl py-1.5 text-[11px] transition",
                     active
                       ? "gradient-brand"
-                      : "text-foreground/70 hover:bg-accent/50",
+                      : "text-foreground/70 hover:bg-accent/50"
                   )}
                 >
                   <n.icon className="h-4 w-4" />
