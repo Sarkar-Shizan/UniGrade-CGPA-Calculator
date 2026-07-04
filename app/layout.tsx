@@ -4,21 +4,21 @@ import { ToasterProvider } from "@/components/ToasterProvider";
 
 export const metadata: Metadata = {
   title: {
-    default: "University CGPA Calculator",
-    template: "%s | University CGPA Calculator",
+    default: "UniGrade- CGPA Calculator",
+    template: "%s | UniGrade- CGPA Calculator",
   },
   description:
     "Calculate your GPA and CGPA with university-specific grading rules. Fast, private, and works offline in your browser.",
   authors: [{ name: "CGPA Calculator" }],
   openGraph: {
-    title: "University CGPA Calculator",
+    title: "UniGrade- CGPA Calculator",
     description:
       "Accurate GPA and CGPA calculations tuned to your university's grading system.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "University CGPA Calculator",
+    title: "UniGrade- CGPA Calculator",
     description:
       "Accurate GPA and CGPA calculations tuned to your university's grading system.",
   },

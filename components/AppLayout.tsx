@@ -5,19 +5,17 @@ import { usePathname } from "next/navigation";
 import {
   Calculator,
   GraduationCap,
-  History,
   Home,
   Moon,
   Settings,
   Sun,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const nav = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/calculator", label: "Calculator", icon: Calculator },
-  { href: "/history", label: "History", icon: History },
   { href: "/universities", label: "Universities", icon: GraduationCap },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
@@ -28,10 +26,33 @@ function cn(...classes: (string | undefined | false | null)[]) {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  const toggle = () =>
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  /* load + apply theme once */
+  useEffect(() => {
+    const saved =
+      (localStorage.getItem("theme") as "dark" | "light") || "dark";
+
+    setTheme(saved);
+    document.documentElement.classList.toggle("dark", saved === "dark");
+  }, []);
+
+  /* toggle theme */
+  const toggle = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+
+      localStorage.setItem("theme", next);
+
+      document.documentElement.classList.toggle(
+        "dark",
+        next === "dark"
+      );
+
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-screen flex w-full">
@@ -42,10 +63,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="min-w-0">
             <div className="text-sm font-semibold truncate">
-              CGPA Calculator
+              UniGrade
             </div>
             <div className="text-xs text-muted-foreground truncate">
-              University-aware
+              CGPA Calculator
             </div>
           </div>
         </div>
@@ -86,7 +107,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           ) : (
             <Moon className="h-4 w-4" />
           )}
-          <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+          <span>
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </span>
         </button>
       </aside>
 

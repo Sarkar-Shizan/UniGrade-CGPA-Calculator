@@ -16,7 +16,7 @@ export default function HomePage() {
         <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-brand/30 blur-3xl" />
         <div className="relative">
           <div className="inline-flex items-center gap-2 rounded-full glass px-3 py-1 text-xs">
-            <Sparkles className="h-3.5 w-3.5" /> University-aware grading
+            <Sparkles className="h-3.5 w-3.5" /> University-wise grading
           </div>
           <h1 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight">
             <span className="gradient-text">University CGPA</span> Calculator

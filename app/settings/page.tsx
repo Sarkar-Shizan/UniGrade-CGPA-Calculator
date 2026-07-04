@@ -9,20 +9,32 @@ type Theme = "dark" | "light";
 export default function SettingsPage() {
   const [theme, setTheme] = useState<Theme>("dark");
 
-  /* load theme */
+  /* INIT ONLY ONCE */
   useEffect(() => {
-    const saved = localStorage.getItem("theme") as Theme | null;
-    if (saved) setTheme(saved);
+    const saved = (localStorage.getItem("theme") as Theme) || "dark";
+
+    setTheme(saved);
+    document.documentElement.classList.toggle(
+      "dark",
+      saved === "dark"
+    );
   }, []);
 
-  /* apply theme */
-  useEffect(() => {
-    localStorage.setItem("theme", theme);
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
+  /* TOGGLE ONLY */
+  const toggle = () => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
 
-  const toggle = () =>
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
+      localStorage.setItem("theme", next);
+
+      document.documentElement.classList.toggle(
+        "dark",
+        next === "dark"
+      );
+
+      return next;
+    });
+  };
 
   return (
     <AppLayout>
@@ -37,8 +49,8 @@ export default function SettingsPage() {
 
       <div className="space-y-3">
         {/* Theme */}
-        <div className="glass rounded-2xl p-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <div className="min-w-0">
+        <div className="glass rounded-2xl p-4 flex justify-between items-center">
+          <div>
             <div className="font-semibold">Appearance</div>
             <div className="text-sm text-muted-foreground">
               {theme === "dark" ? "Dark mode" : "Light mode"}
@@ -47,7 +59,7 @@ export default function SettingsPage() {
 
           <button
             onClick={toggle}
-            className="shrink-0 inline-flex items-center gap-2 rounded-xl gradient-brand px-4 py-2 text-sm font-semibold"
+            className="flex items-center gap-2 rounded-xl gradient-brand px-4 py-2 text-sm font-semibold"
           >
             {theme === "dark" ? (
               <Sun className="h-4 w-4" />
@@ -58,9 +70,9 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {/* Reset data */}
-        <div className="glass rounded-2xl p-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <div className="min-w-0">
+        {/* Reset */}
+        <div className="glass rounded-2xl p-4 flex justify-between items-center">
+          <div>
             <div className="font-semibold">Reset all data</div>
             <div className="text-sm text-muted-foreground">
               Clears calculator state and history.
@@ -69,14 +81,10 @@ export default function SettingsPage() {
 
           <button
             onClick={() => {
-              localStorage.removeItem("cgpa:state");
-              localStorage.removeItem("cgpa:history");
-              localStorage.removeItem("theme");
-
-              alert("Local data cleared. Reloading…");
-              setTimeout(() => window.location.reload(), 500);
+              localStorage.clear();
+              window.location.reload();
             }}
-            className="shrink-0 inline-flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm text-destructive hover-scale"
+            className="flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm text-destructive"
           >
             <Trash2 className="h-4 w-4" /> Clear
           </button>

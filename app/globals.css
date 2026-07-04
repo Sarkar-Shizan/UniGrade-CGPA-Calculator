@@ -1,14 +1,11 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
+@import "tw-animate-css";
+
 @source "../app";
 @source "../components";
 @source "../data";
-@source "../hooks";
-@source "../lib";
-@source "../types";
-@source "../utils";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Tailwind handles dark mode via class strategy */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
