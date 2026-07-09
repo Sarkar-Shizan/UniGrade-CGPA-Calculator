@@ -48,7 +48,7 @@ export default function HomePage() {
         <Feature
           icon={GraduationCap}
           title={`${universities.length} universities`}
-          text="Bangladesh & international grading systems included, easily extensible."
+          text="Bangladesh's all universities grading systems included, easily extensible."
         />
         <Feature
           icon={TrendingUp}
