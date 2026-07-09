@@ -57,7 +57,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex w-full">
       <aside className="hidden md:flex md:w-64 shrink-0 flex-col gap-2 p-4 sticky top-0 h-screen">
-        <div className="glass rounded-2xl p-4 flex items-center gap-3">
+        <div className="glass rounded-none p-4 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl gradient-brand grid place-items-center">
             <Calculator className="h-5 w-5" />
           </div>
@@ -71,7 +71,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <nav className="glass rounded-2xl p-2 flex-1">
+        <nav className="glass rounded-none p-2 flex-1">
           <ul className="flex flex-col gap-1">
             {nav.map((n) => {
               const active =
@@ -100,7 +100,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <button
           onClick={toggle}
-          className="glass rounded-2xl p-3 flex items-center gap-3 text-sm hover:bg-accent/50 transition"
+          className="glass rounded-none p-3 flex items-center gap-3 text-sm hover:bg-accent/50 transition"
         >
           {theme === "dark" ? (
             <Sun className="h-4 w-4" />
@@ -119,7 +119,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <div className="h-9 w-9 rounded-xl gradient-brand grid place-items-center">
               <Calculator className="h-4 w-4" />
             </div>
-            <div className="font-semibold">CGPA Calculator</div>
+            <div className="font-semibold">UniGrade</div>
           </div>
 
           <button

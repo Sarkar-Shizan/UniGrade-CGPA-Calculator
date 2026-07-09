@@ -15,8 +15,7 @@ export function StatCard({
 }) {
   return (
     <div
-      className={
-        "glass rounded-2xl p-4 flex flex-col gap-2 " +
+      className={ "glass rounded-none p-4 flex flex-col gap-2 " +
         (accent ? "gradient-brand" : "")
       }
     >

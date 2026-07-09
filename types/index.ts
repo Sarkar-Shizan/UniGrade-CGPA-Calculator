@@ -7,15 +7,18 @@ export interface GradeMapping {
   maxPercent?: number;
 }
 
+export type GradeRule = GradeMapping;
+
 export interface University {
   id: string;
   name: string;
   country: string;
-  scale: number; // 4.0 or 5.0
-  gradingType: GradingType;
+  division: string;
+  scale: number;
+  gradingType: "letter" | "percentage";
   passingGrade?: string;
   passingPercent?: number;
-  grades: GradeMapping[];
+  grades: GradeRule[];
   notes?: string;
 }
 

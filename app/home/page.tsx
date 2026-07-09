@@ -12,7 +12,7 @@ import { universities } from "@/data/universities";
 export default function HomePage() {
   return (
     <AppLayout>
-      <section className="glass rounded-3xl p-6 md:p-10 relative overflow-hidden">
+      <section className="glass rounded-none p-6 md:p-10 relative overflow-hidden">
         <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-brand/30 blur-3xl" />
         <div className="relative">
           <div className="inline-flex items-center gap-2 rounded-full glass px-3 py-1 text-xs">
@@ -75,7 +75,7 @@ function Feature({
   text: string;
 }) {
   return (
-    <div className="glass rounded-2xl p-5">
+    <div className="glass rounded-none p-5">
       <div className="h-10 w-10 rounded-xl gradient-brand grid place-items-center">
         <Icon className="h-5 w-5" />
       </div>

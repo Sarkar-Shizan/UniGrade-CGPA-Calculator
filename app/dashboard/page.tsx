@@ -38,7 +38,7 @@ const cards = [
 export default function DashboardPage() {
   return (
     <AppLayout>
-      <div className="glass rounded-3xl p-6 mb-4">
+      <div className="glass rounded-none p-6 mb-4">
         <h1 className="text-2xl font-bold">
           <span className="gradient-text">Dashboard</span>
         </h1>
@@ -48,7 +48,7 @@ export default function DashboardPage() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {cards.map((card) => (
-          <Link key={card.href} href={card.href} className="glass rounded-2xl p-5 hover-scale">
+          <Link key={card.href} href={card.href} className="glass rounded-none p-5 hover-scale">
             <div className="h-10 w-10 rounded-xl gradient-brand grid place-items-center">
               <card.icon className="h-5 w-5" />
             </div>

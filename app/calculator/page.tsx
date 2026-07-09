@@ -33,44 +33,120 @@ function makeSemester(name: string): Semester {
         name: "",
         code: "",
         credits: 3,
+        grade: "",
       },
     ],
   };
 }
 
-/* GPA */
-function calcCGPA(semesters: Semester[], uni: University) {
-  let totalCredits = 0;
-  let totalPoints = 0;
+function getCoursePoint(course: Course, university: University) {
+  if (university.gradingType === "letter") {
+    return (
+      university.grades.find(
+        (grade) => grade.grade === course.grade
+      )?.point ?? 0
+    );
+  }
 
-  const perSemester = semesters.map((sem) => {
-    let semCredits = 0;
-    let semPoints = 0;
+  const marks = course.marks;
 
-    sem.courses.forEach((c) => {
-      const grade = uni.grades.find((g) => g.grade === c.grade);
-      const point = grade ? grade.point : 0;
+  if (marks == null) {
+    return 0;
+  }
 
-      semCredits += c.credits;
-      semPoints += point * c.credits;
+  return (
+    university.grades.find(
+      (grade) =>
+        grade.minPercent != null &&
+        grade.maxPercent != null &&
+        marks >= grade.minPercent &&
+        marks <= grade.maxPercent
+    )?.point ?? 0
+  );
+}
+
+function getCourseGrade(course: Course, university: University) {
+  if (university.gradingType === "letter") {
+    return course.grade || "N/A";
+  }
+
+  const marks = course.marks;
+
+  if (marks == null) {
+    return "N/A";
+  }
+
+  return (
+    university.grades.find(
+      (grade) =>
+        grade.minPercent != null &&
+        grade.maxPercent != null &&
+        marks >= grade.minPercent &&
+        marks <= grade.maxPercent
+    )?.grade ?? "N/A"
+  );
+}
+
+/* ---------------- GPA ---------------- */
+
+function calcCGPA(
+  semesters: Semester[],
+  university: University,
+  previousCGPA = 0,
+  previousCredits = 0
+) {
+  let currentCredits = 0;
+  let currentPoints = 0;
+
+  const perSemester = semesters.map((semester) => {
+    let semesterCredits = 0;
+    let semesterPoints = 0;
+
+    semester.courses.forEach((course) => {
+      const point = getCoursePoint(course, university);
+      const credit = Number(course.credits) || 0;
+
+      semesterCredits += credit;
+      semesterPoints += point * credit;
     });
 
-    const gpa = semCredits ? semPoints / semCredits : 0;
+    const gpa =
+      semesterCredits > 0
+        ? semesterPoints / semesterCredits
+        : 0;
 
-    totalCredits += semCredits;
-    totalPoints += semPoints;
+    currentCredits += semesterCredits;
+    currentPoints += semesterPoints;
 
     return {
-      name: sem.name,
+      name: semester.name,
       gpa,
-      credits: semCredits,
+      credits: semesterCredits,
+      qualityPoints: semesterPoints,
     };
   });
 
+  const previousQualityPoints =
+    previousCGPA * previousCredits;
+
+  const totalCredits =
+    previousCredits + currentCredits;
+
+  const totalPoints =
+    previousQualityPoints + currentPoints;
+
   return {
-    cgpa: totalCredits ? totalPoints / totalCredits : 0,
+    cgpa:
+      totalCredits > 0
+        ? totalPoints / totalCredits
+        : 0,
     totalCredits,
     totalQualityPoints: totalPoints,
+    currentCredits,
+    currentQualityPoints: currentPoints,
+    previousCGPA,
+    previousCredits,
+    previousQualityPoints,
     perSemester,
   };
 }
@@ -79,7 +155,9 @@ function calcCGPA(semesters: Semester[], uni: University) {
 
 export default function CalculatorPage() {
   const [state, setState] = useState({
-    universityId: "du",
+    universityId: "",
+    previousCGPA: "",
+    completedCredits: "",
     semesters: [makeSemester("Semester 1")],
   });
 
@@ -87,107 +165,256 @@ export default function CalculatorPage() {
   const [error, setError] = useState<string | null>(null);
 
   const university =
-    universities.find((u) => u.id === state.universityId) ??
-    universities[0];
+    universities.find(
+      (item) => item.id === state.universityId
+    ) ?? null;
 
   /* ---------------- calculate ---------------- */
 
   function handleCalculate() {
-    const hasMissing = state.semesters.some((sem) =>
-      sem.courses.some((c) =>
-        university.gradingType === "letter" ? !c.grade : false
-      )
-    );
-
-    if (hasMissing) {
-      setError("Please select grades for all courses before calculating your CGPA.");
+    if (!university) {
+      setError(
+        "Please select a university before calculating your CGPA."
+      );
       setResult(null);
       return;
     }
 
-    const summary = calcCGPA(state.semesters, university);
+    const previousCGPA =
+      state.previousCGPA.trim() === ""
+        ? 0
+        : Number(state.previousCGPA);
+
+    const previousCredits =
+      state.completedCredits.trim() === ""
+        ? 0
+        : Number(state.completedCredits);
+
+    const hasPreviousCGPA =
+      state.previousCGPA.trim() !== "";
+
+    const hasPreviousCredits =
+      state.completedCredits.trim() !== "";
+
+    if (hasPreviousCGPA !== hasPreviousCredits) {
+      setError(
+        "Please enter both current CGPA and completed credits, or leave both fields empty."
+      );
+      setResult(null);
+      return;
+    }
+
+    if (
+      hasPreviousCGPA &&
+      (
+        Number.isNaN(previousCGPA) ||
+        previousCGPA < 0 ||
+        previousCGPA > university.scale
+      )
+    ) {
+      setError(
+        `Current CGPA must be between 0 and ${university.scale}.`
+      );
+      setResult(null);
+      return;
+    }
+
+    if (
+      hasPreviousCredits &&
+      (
+        Number.isNaN(previousCredits) ||
+        previousCredits <= 0
+      )
+    ) {
+      setError(
+        "Completed credits must be greater than zero."
+      );
+      setResult(null);
+      return;
+    }
+
+    const hasInvalidCredits =
+      state.semesters.some((semester) =>
+        semester.courses.some(
+          (course) =>
+            Number(course.credits) <= 0 ||
+            Number.isNaN(Number(course.credits))
+        )
+      );
+
+    if (hasInvalidCredits) {
+      setError(
+        "Please enter valid credits greater than zero for all courses."
+      );
+      setResult(null);
+      return;
+    }
+
+    const hasMissingResult =
+      state.semesters.some((semester) =>
+        semester.courses.some((course) => {
+          if (university.gradingType === "letter") {
+            return !course.grade;
+          }
+
+          return (
+            course.marks == null ||
+            Number.isNaN(Number(course.marks)) ||
+            course.marks < 0 ||
+            course.marks > 100
+          );
+        })
+      );
+
+    if (hasMissingResult) {
+      setError(
+        university.gradingType === "letter"
+          ? "Please select grades for all courses before calculating your CGPA."
+          : "Please enter valid marks between 0 and 100 for all courses."
+      );
+      setResult(null);
+      return;
+    }
+
+    const summary = calcCGPA(
+      state.semesters,
+      university,
+      previousCGPA,
+      previousCredits
+    );
+
     setResult(summary);
     setError(null);
   }
 
-  /* ---------------- UPDATE COURSE ---------------- */
+  /* ---------------- update complete course ---------------- */
 
-  function updateCourse(
-    si: number,
-    ci: number,
-    field: keyof Course,
-    value: any
+  function updateCompleteCourse(
+    semesterIndex: number,
+    courseIndex: number,
+    updatedCourse: Course
   ) {
-    setState((s) => ({
-      ...s,
-      semesters: s.semesters.map((sem, i) =>
-        i === si
-          ? {
-              ...sem,
-              courses: sem.courses.map((c, j) =>
-                j === ci ? { ...c, [field]: value } : c
-              ),
-            }
-          : sem
+    setState((current) => ({
+      ...current,
+      semesters: current.semesters.map(
+        (semester, currentSemesterIndex) =>
+          currentSemesterIndex === semesterIndex
+            ? {
+                ...semester,
+                courses: semester.courses.map(
+                  (course, currentCourseIndex) =>
+                    currentCourseIndex === courseIndex
+                      ? updatedCourse
+                      : course
+                ),
+              }
+            : semester
       ),
     }));
+
+    setResult(null);
+    setError(null);
   }
 
-  /* ---------------- ADD COURSE (FIXED) ---------------- */
+  /* ---------------- add course ---------------- */
 
-  function addCourse(si: number) {
-    setState((s) => ({
-      ...s,
-      semesters: s.semesters.map((sem, i) =>
-        i === si
-          ? {
-              ...sem,
-              courses: [
-                ...sem.courses,
-                {
-                  id: newId(),
-                  name: "",
-                  code: "",
-                  credits: 3,
-                },
-              ],
-            }
-          : sem
+  function addCourse(semesterIndex: number) {
+    setState((current) => ({
+      ...current,
+      semesters: current.semesters.map(
+        (semester, currentSemesterIndex) =>
+          currentSemesterIndex === semesterIndex
+            ? {
+                ...semester,
+                courses: [
+                  ...semester.courses,
+                  {
+                    id: newId(),
+                    name: "",
+                    code: "",
+                    credits: 3,
+                    grade: "",
+                  },
+                ],
+              }
+            : semester
       ),
     }));
+
+    setResult(null);
+    setError(null);
   }
 
-  /* ---------------- REMOVE COURSE ---------------- */
+  /* ---------------- remove course ---------------- */
 
-  function removeCourse(si: number, ci: number) {
-    setState((s) => ({
-      ...s,
-      semesters: s.semesters.map((sem, i) =>
-        i === si
-          ? {
-              ...sem,
-              courses: sem.courses.filter((_, j) => j !== ci),
-            }
-          : sem
+  function removeCourse(
+    semesterIndex: number,
+    courseIndex: number
+  ) {
+    setState((current) => ({
+      ...current,
+      semesters: current.semesters.map(
+        (semester, currentSemesterIndex) => {
+          if (currentSemesterIndex !== semesterIndex) {
+            return semester;
+          }
+
+          const remainingCourses =
+            semester.courses.filter(
+              (_, currentCourseIndex) =>
+                currentCourseIndex !== courseIndex
+            );
+
+          return {
+            ...semester,
+            courses:
+              remainingCourses.length > 0
+                ? remainingCourses
+                : [
+                    {
+                      id: newId(),
+                      name: "",
+                      code: "",
+                      credits: 3,
+                      grade: "",
+                    },
+                  ],
+          };
+        }
       ),
     }));
+
+    setResult(null);
+    setError(null);
   }
+
+  /* ---------------- add semester ---------------- */
 
   function addSemester() {
-    setState((s) => ({
-      ...s,
+    setState((current) => ({
+      ...current,
       semesters: [
-        ...s.semesters,
-        makeSemester(`Semester ${s.semesters.length + 1}`),
+        ...current.semesters,
+        makeSemester(
+          `Semester ${current.semesters.length + 1}`
+        ),
       ],
     }));
+
+    setResult(null);
+    setError(null);
   }
+
+  /* ---------------- reset ---------------- */
 
   function reset() {
     setState({
-      universityId: university.id,
+      universityId: "",
+      previousCGPA: "",
+      completedCredits: "",
       semesters: [makeSemester("Semester 1")],
     });
+
     setResult(null);
     setError(null);
   }
@@ -195,35 +422,141 @@ export default function CalculatorPage() {
   /* ---------------- PDF ---------------- */
 
   function downloadPDF() {
+    if (!university) {
+      setError(
+        "Please select a university before downloading the PDF."
+      );
+      return;
+    }
+
+    if (!result) {
+      setError(
+        "Please calculate your CGPA before downloading the PDF."
+      );
+      return;
+    }
+
     const doc = new jsPDF();
     let y = 15;
 
+    doc.setFontSize(18);
     doc.text("CGPA Report", 14, y);
     y += 10;
 
-    doc.text(university.name, 14, y);
-    y += 10;
+    doc.setFontSize(11);
+    doc.text(
+      `University: ${university.name}`,
+      14,
+      y
+    );
+    y += 8;
 
-    state.semesters.forEach((sem) => {
-      doc.text(sem.name, 14, y);
+    if (result.previousCredits > 0) {
+      doc.text(
+        `Previous CGPA: ${result.previousCGPA.toFixed(2)}`,
+        14,
+        y
+      );
       y += 6;
 
-      sem.courses.forEach((c) => {
+      doc.text(
+        `Previously Completed Credits: ${result.previousCredits}`,
+        14,
+        y
+      );
+      y += 10;
+    }
+
+    state.semesters.forEach(
+      (semester, semesterIndex) => {
+        const semesterResult =
+          result.perSemester[semesterIndex];
+
+        if (y > 270) {
+          doc.addPage();
+          y = 15;
+        }
+
+        doc.setFontSize(13);
+        doc.text(semester.name, 14, y);
+        y += 7;
+
+        doc.setFontSize(10);
+
+        semester.courses.forEach(
+          (course, courseIndex) => {
+            if (y > 275) {
+              doc.addPage();
+              y = 15;
+            }
+
+            const gradePoint =
+              getCoursePoint(course, university);
+
+            const displayGrade =
+              getCourseGrade(course, university);
+
+            const courseName =
+              course.name ||
+              course.code ||
+              `Course ${courseIndex + 1}`;
+
+            doc.text(
+              `${courseName} | Credits: ${course.credits} | Grade: ${displayGrade} | Point: ${gradePoint.toFixed(2)}`,
+              18,
+              y
+            );
+
+            y += 6;
+          }
+        );
+
         doc.text(
-          `${c.name || "Course"} - ${c.credits} credits`,
+          `Semester GPA: ${
+            semesterResult?.gpa.toFixed(2) ??
+            "0.00"
+          }`,
           18,
           y
         );
-        y += 5;
-      });
 
-      y += 5;
-    });
+        y += 10;
+      }
+    );
+
+    if (y > 250) {
+      doc.addPage();
+      y = 15;
+    }
+
+    doc.setFontSize(11);
 
     doc.text(
-      `CGPA: ${result?.cgpa?.toFixed(2) ?? "0"}`,
+      `Newly Completed Credits: ${result.currentCredits}`,
       14,
-      y + 10
+      y
+    );
+    y += 7;
+
+    doc.text(
+      `Total Completed Credits: ${result.totalCredits}`,
+      14,
+      y
+    );
+    y += 7;
+
+    doc.text(
+      `Total Quality Points: ${result.totalQualityPoints.toFixed(2)}`,
+      14,
+      y
+    );
+    y += 8;
+
+    doc.setFontSize(15);
+    doc.text(
+      `Final CGPA: ${result.cgpa.toFixed(2)}`,
+      14,
+      y
     );
 
     doc.save("cgpa.pdf");
@@ -233,35 +566,141 @@ export default function CalculatorPage() {
 
   return (
     <AppLayout>
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
         {/* LEFT */}
-        <div className="space-y-4">
 
+        <div className="space-y-4">
           <UniversityPicker
-            value={university.id}
-            onChange={(u: University) =>
-              setState((s) => ({ ...s, universityId: u.id }))
-            }
+            value={state.universityId}
+            onChange={(selectedUniversity: University) => {
+              setState((current) => ({
+                ...current,
+                universityId: selectedUniversity.id,
+                semesters: current.semesters.map(
+                  (semester) => ({
+                    ...semester,
+                    courses: semester.courses.map(
+                      (course) => ({
+                        ...course,
+                        grade: "",
+                        marks: undefined,
+                      })
+                    ),
+                  })
+                ),
+              }));
+
+              setResult(null);
+              setError(null);
+            }}
           />
 
+          {/* PREVIOUS SEMESTER RECORDS */}
+
+          <div className="glass rounded-none p-5">
+            <h2 className="mb-4 text-base font-semibold">
+              Previous Semester&apos;s Records
+            </h2>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <label>
+                <span className="mb-2 block text-sm font-semibold">
+                  Current CGPA:
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  max={university?.scale}
+                  step="0.01"
+                  value={state.previousCGPA}
+                  placeholder="Enter current CGPA"
+                  onChange={(event) => {
+                    setState((current) => ({
+                      ...current,
+                      previousCGPA:
+                        event.target.value,
+                    }));
+
+                    setResult(null);
+                    setError(null);
+                  }}
+                  className="
+                    w-full rounded-xl border border-border
+                    bg-background px-3 py-2.5 text-sm
+                    outline-none transition-colors
+                    focus:border-blue-500 focus:ring-2
+                    focus:ring-blue-500/30
+                  "
+                />
+              </label>
+
+              <label>
+                <span className="mb-2 block text-sm font-semibold">
+                  Completed Credits:
+                </span>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={state.completedCredits}
+                  placeholder="Enter completed credits"
+                  onChange={(event) => {
+                    setState((current) => ({
+                      ...current,
+                      completedCredits:
+                        event.target.value,
+                    }));
+
+                    setResult(null);
+                    setError(null);
+                  }}
+                  className="
+                    w-full rounded-xl border border-border
+                    bg-background px-3 py-2.5 text-sm
+                    outline-none transition-colors
+                    focus:border-blue-500 focus:ring-2
+                    focus:ring-blue-500/30
+                  "
+                />
+              </label>
+            </div>
+          </div>
+
           {/* STATS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard
               label="CGPA"
-              value={result ? result.cgpa.toFixed(2) : "—"}
+              value={
+                result
+                  ? result.cgpa.toFixed(2)
+                  : "—"
+              }
               icon={Award}
             />
+
             <StatCard
               label="Credits"
-              value={result ? String(result.totalCredits) : "—"}
+              value={
+                result
+                  ? String(result.totalCredits)
+                  : "—"
+              }
               icon={BookOpen}
             />
+
             <StatCard
               label="Points"
-              value={result ? result.totalQualityPoints.toFixed(1) : "—"}
+              value={
+                result
+                  ? result.totalQualityPoints.toFixed(1)
+                  : "—"
+              }
               icon={TrendingUp}
             />
+
             <StatCard
               label="Semesters"
               value={String(state.semesters.length)}
@@ -270,110 +709,181 @@ export default function CalculatorPage() {
           </div>
 
           {/* ERROR */}
+
           {error && (
-            <div className="glass rounded-2xl p-3 text-red-500 text-sm">
+            <div className="glass rounded-none p-3 text-sm text-red-500">
               {error}
             </div>
           )}
 
           {/* SEMESTERS */}
-          {state.semesters.map((sem, si) => (
-            <div key={sem.id} className="glass rounded-3xl p-5">
 
-              <div className="flex justify-between mb-3">
-                <input
-                  value={sem.name}
-                  onChange={(e) =>
-                    setState((s) => ({
-                      ...s,
-                      semesters: s.semesters.map((x, i) =>
-                        i === si ? { ...x, name: e.target.value } : x
-                      ),
-                    }))
-                  }
-                  className="bg-transparent font-semibold"
-                />
-
-                <span className="text-xs px-3 py-1 rounded-full bg-accent/50">
-                  {sem.courses.length} Courses
-                </span>
-              </div>
-
-              {/* COURSES */}
-              {sem.courses.map((c, ci) => (
-                <CourseRow
-                  key={c.id}
-                  course={c}
-                  university={university}
-                  onChange={(nc) =>
-                    updateCourse(si, ci, "name", nc.name)
-                  }
-                  onRemove={() => removeCourse(si, ci)}
-                />
-              ))}
-
-              {/* ADD COURSE BUTTON */}
-              <button
-                onClick={() => addCourse(si)}
-                className="mt-3 inline-flex items-center gap-2 text-sm gradient-brand px-4 py-2 rounded-xl font-semibold"
+          {state.semesters.map(
+            (semester, semesterIndex) => (
+              <div
+                key={semester.id}
+                className="glass rounded-none p-5"
               >
-                <Plus className="w-4 h-4" />
-                Add Course
-              </button>
-            </div>
-          ))}
+                <div className="mb-3 flex justify-between">
+                  <input
+                    value={semester.name}
+                    onChange={(event) => {
+                      setState((current) => ({
+                        ...current,
+                        semesters:
+                          current.semesters.map(
+                            (
+                              currentSemester,
+                              currentIndex
+                            ) =>
+                              currentIndex ===
+                              semesterIndex
+                                ? {
+                                    ...currentSemester,
+                                    name:
+                                      event.target
+                                        .value,
+                                  }
+                                : currentSemester
+                          ),
+                      }));
+
+                      setResult(null);
+                    }}
+                    className="bg-transparent font-semibold outline-none"
+                  />
+
+                  <span className="rounded-full bg-accent/50 px-3 py-1 text-xs">
+                    {semester.courses.length} Courses
+                  </span>
+                </div>
+
+                {/* COURSES */}
+
+                {university ? (
+                  semester.courses.map(
+                    (course, courseIndex) => (
+                      <CourseRow
+                        key={course.id}
+                        course={course}
+                        university={university}
+                        onChange={(updatedCourse) =>
+                          updateCompleteCourse(
+                            semesterIndex,
+                            courseIndex,
+                            updatedCourse
+                          )
+                        }
+                        onRemove={() =>
+                          removeCourse(
+                            semesterIndex,
+                            courseIndex
+                          )
+                        }
+                      />
+                    )
+                  )
+                ) : (
+                  <div className="border border-blue-500/40 bg-blue-500/5 p-4 text-sm text-muted-foreground">
+                    Select a university to enter course grades.
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    addCourse(semesterIndex)
+                  }
+                  disabled={!university}
+                  className="
+                    gradient-brand mt-3 inline-flex
+                    items-center gap-2 rounded-xl
+                    px-4 py-2 text-sm font-semibold
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Course
+                </button>
+              </div>
+            )
+          )}
 
           {/* ACTIONS */}
-          <div className="flex gap-2 flex-wrap">
+
+          <div className="flex flex-wrap gap-2">
             <button
+              type="button"
               onClick={handleCalculate}
-              className="gradient-brand px-4 py-2 rounded-xl font-semibold"
+              className="gradient-brand rounded-xl px-4 py-2 font-semibold"
             >
-              Calculate GPA
+              Calculate
             </button>
 
             <button
+              type="button"
               onClick={addSemester}
-              className="gradient-brand px-4 py-2 rounded-xl font-semibold"
+              disabled={!university}
+              className="
+                gradient-brand rounded-xl px-4 py-2
+                font-semibold disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
               Add Semester
             </button>
 
             <button
+              type="button"
               onClick={downloadPDF}
-              className="gradient-brand px-4 py-2 rounded-xl font-semibold"
+              className="
+                gradient-brand inline-flex items-center
+                gap-2 rounded-xl px-4 py-2 font-semibold
+              "
             >
+              <Download className="h-4 w-4" />
               Download PDF
             </button>
 
             <button
+              type="button"
               onClick={reset}
-              className="gradient-brand px-4 py-2 rounded-xl font-semibold"
+              className="gradient-brand rounded-xl px-4 py-2 font-semibold"
             >
               Reset
             </button>
           </div>
-
         </div>
 
         {/* RIGHT - GRADING SYSTEM */}
-        <div className="glass rounded-3xl p-4">
-          <h2 className="text-sm font-semibold mb-3">
+
+        <div className="glass h-fit rounded-none p-4">
+          <h2 className="mb-3 text-sm font-semibold">
             Grading System
           </h2>
 
           <div className="space-y-2">
-            {university.grades.map((g) => (
-              <div key={g.grade} className="flex justify-between text-sm">
-                <span>{g.grade}</span>
-                <span className="font-semibold">
-                  {g.point.toFixed(2)}
-                </span>
-              </div>
-            ))}
+            {university ? (
+              university.grades.map((grade) => (
+                <div
+                  key={grade.grade}
+                  className="flex justify-between text-sm"
+                >
+                  <span>{grade.grade}</span>
+
+                  <span className="font-semibold">
+                    {grade.point.toFixed(2)}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Select a university to view its grading system.
+              </p>
+            )}
           </div>
         </div>
-
       </div>
     </AppLayout>
   );

@@ -3,36 +3,44 @@
 import { Trash2 } from "lucide-react";
 import type { Course, University } from "@/types";
 
-/* ---------------- helpers (replacing utils) ---------------- */
+/* ---------------- helpers ---------------- */
 
 function coursePoint(course: Course, university: University) {
   if (university.gradingType === "letter") {
-    const g = university.grades.find((x) => x.grade === course.grade);
-    return g ? g.point : 0;
+    const grade = university.grades.find(
+      (item) => item.grade === course.grade
+    );
+
+    return grade ? grade.point : 0;
   }
 
   if (university.gradingType === "percentage") {
     const marks = course.marks ?? 0;
-    const g = university.grades.find(
-      (x) =>
-        x.minPercent != null &&
-        x.maxPercent != null &&
-        marks >= x.minPercent &&
-        marks <= x.maxPercent
+
+    const grade = university.grades.find(
+      (item) =>
+        item.minPercent != null &&
+        item.maxPercent != null &&
+        marks >= item.minPercent &&
+        marks <= item.maxPercent
     );
-    return g ? g.point : 0;
+
+    return grade ? grade.point : 0;
   }
 
   return 0;
 }
 
-function marksToGrade(marks: number, university: University) {
+function marksToGrade(
+  marks: number,
+  university: University
+) {
   return university.grades.find(
-    (g) =>
-      g.minPercent != null &&
-      g.maxPercent != null &&
-      marks >= g.minPercent &&
-      marks <= g.maxPercent
+    (grade) =>
+      grade.minPercent != null &&
+      grade.maxPercent != null &&
+      marks >= grade.minPercent &&
+      marks <= grade.maxPercent
   );
 }
 
@@ -46,66 +54,106 @@ export function CourseRow({
 }: {
   course: Course;
   university: University;
-  onChange: (c: Course) => void;
+  onChange: (course: Course) => void;
   onRemove: () => void;
 }) {
   const point = coursePoint(course, university);
 
   const derivedGrade =
-    university.gradingType === "percentage" && course.marks != null
-      ? marksToGrade(course.marks, university)?.grade
+    university.gradingType === "percentage" &&
+    course.marks != null
+      ? marksToGrade(
+          course.marks,
+          university
+        )?.grade
       : null;
 
+  const fieldClassName = `
+    min-w-0
+    rounded-xl
+    border border-border
+    bg-transparent
+    px-3 py-2
+    text-sm
+    outline-none
+    transition-colors
+    focus:border-blue-500
+    focus:ring-2
+    focus:ring-blue-500/30
+  `;
+
   return (
-    <div className="glass rounded-2xl p-3 md:p-4 grid grid-cols-1 md:grid-cols-[1.4fr_0.8fr_0.6fr_1fr_0.6fr_auto] gap-2 md:gap-3 items-center">
+    <div className="glass grid grid-cols-1 items-center gap-2 rounded-none p-3 md:grid-cols-[1.4fr_0.8fr_0.6fr_1fr_0.6fr_auto] md:gap-3 md:p-4">
+      {/* COURSE NAME */}
       <input
+        type="text"
         placeholder="Course name"
         value={course.name}
-        onChange={(e) =>
-          onChange({ ...course, name: e.target.value })
+        onChange={(event) =>
+          onChange({
+            ...course,
+            name: event.target.value,
+          })
         }
-        className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
+        className={fieldClassName}
       />
 
+      {/* COURSE CODE */}
       <input
+        type="text"
         placeholder="Code"
         value={course.code}
-        onChange={(e) =>
-          onChange({ ...course, code: e.target.value })
+        onChange={(event) =>
+          onChange({
+            ...course,
+            code: event.target.value,
+          })
         }
-        className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
+        className={fieldClassName}
       />
 
+      {/* COURSE CREDITS */}
       <input
         type="number"
         min={0}
         step={0.5}
         placeholder="Credits"
         value={course.credits || ""}
-        onChange={(e) =>
+        onChange={(event) =>
           onChange({
             ...course,
-            credits: parseFloat(e.target.value) || 0,
+            credits:
+              event.target.value === ""
+                ? 0
+                : Number(event.target.value),
           })
         }
-        className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
+        className={fieldClassName}
       />
 
+      {/* GRADE OR MARKS */}
       {university.gradingType === "letter" ? (
         <select
           value={course.grade ?? ""}
-          onChange={(e) =>
+          onChange={(event) =>
             onChange({
               ...course,
-              grade: e.target.value || undefined,
+              grade:
+                event.target.value ||
+                undefined,
             })
           }
-          className="bg-background border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
+          className={`${fieldClassName} bg-background`}
         >
           <option value="">Grade</option>
-          {university.grades.map((g) => (
-            <option key={g.grade} value={g.grade}>
-              {g.grade} ({g.point.toFixed(2)})
+
+          {university.grades.map((grade) => (
+            <option
+              key={grade.grade}
+              value={grade.grade}
+            >
+              {grade.grade} (
+              {grade.point.toFixed(2)})
             </option>
           ))}
         </select>
@@ -114,25 +162,30 @@ export function CourseRow({
           type="number"
           min={0}
           max={100}
+          step={0.01}
           placeholder="Marks %"
           value={course.marks ?? ""}
-          onChange={(e) =>
+          onChange={(event) =>
             onChange({
               ...course,
               marks:
-                e.target.value === ""
+                event.target.value === ""
                   ? undefined
-                  : parseFloat(e.target.value),
+                  : Number(
+                      event.target.value
+                    ),
             })
           }
-          className="bg-transparent border border-border rounded-xl px-3 py-2 text-sm min-w-0 focus:outline-none focus:ring-2 focus:ring-ring"
+          className={fieldClassName}
         />
       )}
 
-      <div className="text-sm tabular-nums text-center">
+      {/* GRADE POINT */}
+      <div className="text-center text-sm tabular-nums">
         {point > 0 ? (
           <span className="font-semibold">
             {point.toFixed(2)}
+
             {derivedGrade && (
               <span className="ml-1 text-xs text-muted-foreground">
                 ({derivedGrade})
@@ -140,14 +193,31 @@ export function CourseRow({
             )}
           </span>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-muted-foreground">
+            —
+          </span>
         )}
       </div>
 
+      {/* REMOVE BUTTON */}
       <button
+        type="button"
         onClick={onRemove}
-        aria-label="Remove"
-        className="h-9 w-9 rounded-xl grid place-items-center hover:bg-destructive/10 text-destructive transition justify-self-end"
+        aria-label="Remove course"
+        title="Remove course"
+        className="
+          grid h-9 w-9 place-items-center
+          justify-self-end rounded-xl
+          border border-transparent
+          text-destructive
+          transition
+          hover:border-red-500
+          hover:bg-destructive/10
+          focus:border-red-500
+          focus:outline-none
+          focus:ring-2
+          focus:ring-red-500/30
+        "
       >
         <Trash2 className="h-4 w-4" />
       </button>

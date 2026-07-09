@@ -38,7 +38,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout>
-      <div className="glass rounded-3xl p-6 mb-4">
+      <div className="glass rounded-none p-6 mb-4">
         <h1 className="text-2xl font-bold">
           <span className="gradient-text">Settings</span>
         </h1>
@@ -49,7 +49,7 @@ export default function SettingsPage() {
 
       <div className="space-y-3">
         {/* Theme */}
-        <div className="glass rounded-2xl p-4 flex justify-between items-center">
+        <div className="glass rounded-none p-4 flex justify-between items-center">
           <div>
             <div className="font-semibold">Appearance</div>
             <div className="text-sm text-muted-foreground">
@@ -71,7 +71,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Reset */}
-        <div className="glass rounded-2xl p-4 flex justify-between items-center">
+        <div className="glass rounded-none p-4 flex justify-between items-center">
           <div>
             <div className="font-semibold">Reset all data</div>
             <div className="text-sm text-muted-foreground">
