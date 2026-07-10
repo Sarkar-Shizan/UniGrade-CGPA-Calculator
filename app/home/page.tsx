@@ -5,9 +5,10 @@ import {
   History,
   Sparkles,
   TrendingUp,
+  UserRound,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
-import { universities } from "@/data/universities";
+import { privateUniversities, publicUniversities, universities } from "@/data/universities";
 
 export default function HomePage() {
   return (
@@ -24,7 +25,7 @@ export default function HomePage() {
           <p className="mt-3 max-w-2xl text-muted-foreground">
             Pick your university and we automatically apply the correct GPA
             scale, grade points, and calculation rules. Track progress
-            semester by semester, export a PDF report, and keep history — all
+            semester by semester, export a PDF report, and keep history-all
             in your browser.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -48,7 +49,7 @@ export default function HomePage() {
         <Feature
           icon={GraduationCap}
           title={`${universities.length} universities`}
-          text="Bangladesh's all universities grading systems included, easily extensible."
+          text={`${publicUniversities.length} public and ${privateUniversities.length} private universities included all over Bangladesh.`}
         />
         <Feature
           icon={TrendingUp}
@@ -60,6 +61,14 @@ export default function HomePage() {
           title="History & PDF"
           text="Save calculations locally and export a shareable PDF report."
         />
+         <Feature
+          icon={UserRound}
+          title="Crafted by Md. Shizan Sarkar"
+          text="Developer of the UniGrade - CGPA Calculator."
+          href="https://dev-sarkar-shizan.vercel.app"
+          linkText="Visit Website"
+          
+        />
       </section>
     </AppLayout>
   );
@@ -69,10 +78,14 @@ function Feature({
   icon: Icon,
   title,
   text,
+  href,
+  linkText,
 }: {
   icon: typeof GraduationCap;
   title: string;
   text: string;
+  href?: string;
+  linkText?: string;
 }) {
   return (
     <div className="glass rounded-none p-5">
@@ -81,6 +94,14 @@ function Feature({
       </div>
       <div className="mt-3 font-semibold">{title}</div>
       <div className="text-sm text-muted-foreground mt-1">{text}</div>
+      {href && linkText ? (
+        <Link
+          href={href}
+          className="mt-4 inline-flex text-sm font-semibold text-brand hover:underline"
+        >
+          {linkText}
+        </Link>
+      ) : null}
     </div>
   );
 }

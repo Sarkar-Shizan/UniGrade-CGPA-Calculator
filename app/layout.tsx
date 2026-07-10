@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "Calculate your GPA and CGPA with university-specific grading rules. Fast, private, and works offline in your browser.",
   authors: [{ name: "CGPA Calculator" }],
   openGraph: {
-    title: "UniGrade- CGPA Calculator",
+    title: "UniGrade - CGPA Calculator",
     description:
       "Accurate GPA and CGPA calculations tuned to your university's grading system.",
     type: "website",

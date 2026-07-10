@@ -758,31 +758,33 @@ export default function CalculatorPage() {
                   </span>
                 </div>
 
-                {/* COURSES */}
+               {/* COURSES */}
 
                 {university ? (
-                  semester.courses.map(
-                    (course, courseIndex) => (
-                      <CourseRow
-                        key={course.id}
-                        course={course}
-                        university={university}
-                        onChange={(updatedCourse) =>
-                          updateCompleteCourse(
-                            semesterIndex,
-                            courseIndex,
-                            updatedCourse
-                          )
-                        }
-                        onRemove={() =>
-                          removeCourse(
-                            semesterIndex,
-                            courseIndex
-                          )
-                        }
-                      />
-                    )
-                  )
+                  <div className="space-y-3 sm:space-y-2">
+                    {semester.courses.map(
+                      (course, courseIndex) => (
+                        <CourseRow
+                          key={course.id}
+                          course={course}
+                          university={university}
+                          onChange={(updatedCourse) =>
+                            updateCompleteCourse(
+                              semesterIndex,
+                              courseIndex,
+                              updatedCourse
+                            )
+                          }
+                          onRemove={() =>
+                            removeCourse(
+                              semesterIndex,
+                              courseIndex
+                            )
+                          }
+                        />
+                      )
+                    )}
+                  </div>
                 ) : (
                   <div className="border border-blue-500/40 bg-blue-500/5 p-4 text-sm text-muted-foreground">
                     Select a university to enter course grades.

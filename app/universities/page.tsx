@@ -193,67 +193,76 @@ export default function UniversitiesClient() {
               </div>
             </div>
 
-            {/* GRADING TABLE */}
+      {/* GRADING TABLE */}
 
-            <div className="mt-3 min-w-0">
-              <div
-                className="
-                  grid
-                  grid-cols-[0.75fr_0.75fr_1.2fr]
-                  gap-1
-                  border-b border-border/60
-                  px-2 pb-1.5
-                  text-[10px]
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  text-muted-foreground
-                  sm:grid-cols-[1fr_1fr_1.5fr]
-                  sm:text-[11px]
-                "
-              >
-                <span>Grade</span>
-                <span>Point</span>
-                <span>Marks</span>
-              </div>
+<div className="mt-3 min-w-0">
+  {/* TABLE HEADER */}
+  <div
+    className="
+      grid
+      grid-cols-[0.75fr_0.75fr_1.2fr]
+      items-center
+      gap-1
+      border-b border-border/60
+      px-2 pb-1.5
+      text-[10px]
+      font-semibold
+      uppercase
+      tracking-wide
+      text-muted-foreground
+      sm:grid-cols-[1fr_1fr_1.5fr]
+      sm:text-[11px]
+    "
+  >
+    <span className="justify-self-start text-left">
+      Grade
+    </span>
 
-              <div className="mt-1 space-y-1">
-                {university.grades.map(
-                  (grade) => (
-                    <div
-                      key={grade.grade}
-                      className="
-                        grid
-                        grid-cols-[0.75fr_0.75fr_1.2fr]
-                        items-center
-                        gap-1
-                        rounded-md
-                        bg-accent/40
-                        px-2 py-1.5
-                        text-[11px]
-                        sm:grid-cols-[1fr_1fr_1.5fr]
-                        sm:text-xs
-                      "
-                    >
-                      <span className="min-w-0 break-words font-medium">
-                        {grade.grade}
-                      </span>
+    <span className="justify-self-center text-center">
+      Point
+    </span>
 
-                      <span className="tabular-nums">
-                        {grade.point.toFixed(2)}
-                      </span>
+    <span className="justify-self-end text-right">
+      Marks
+    </span>
+  </div>
 
-                      <span className="min-w-0 break-words tabular-nums text-muted-foreground">
-                        {grade.minPercent != null &&
-                        grade.maxPercent != null
-                          ? `${grade.minPercent}–${grade.maxPercent}`
-                          : "Not specified"}
-                      </span>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
+  {/* TABLE ROWS */}
+  <div className="mt-1 space-y-1">
+    {university.grades.map((grade) => (
+      <div
+        key={grade.grade}
+        className="
+          grid
+          grid-cols-[0.75fr_0.75fr_1.2fr]
+          items-center
+          gap-1
+          rounded-md
+          bg-accent/40
+          px-2 py-1.5
+          text-[11px]
+          sm:grid-cols-[1fr_1fr_1.5fr]
+          sm:text-xs
+        "
+      >
+        <span className="min-w-0 justify-self-start break-words text-left font-medium">
+          {grade.grade}
+        </span>
+
+        <span className="justify-self-center text-center tabular-nums">
+          {grade.point.toFixed(2)}
+        </span>
+
+        <span className="justify-self-end text-right tabular-nums text-muted-foreground">
+          {grade.minPercent != null &&
+          grade.maxPercent != null
+            ? `${grade.minPercent}–${grade.maxPercent}`
+            : "Not specified"}
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
 
             {/* NOTES */}
 
